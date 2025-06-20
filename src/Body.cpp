@@ -27,11 +27,11 @@ void Body::update(float dt) {
 
 }
 
-void Body::beginUpdate(float dt) {
+void Body::beginUpdateVerlet(float dt) {
 	pos = Vector2Add(Vector2Add(pos, Vector2Scale(vel, dt)), Vector2Scale(acc, 0.5 * dt * dt));
 }
 
-void Body::updateImplicitEuler(float dt) {
+void Body::endUpdateVerlet(float dt) {
 	Vector2 newVel = Vector2Add(vel, Vector2Scale(Vector2Add(acc, newAcc), 0.5 * dt));
 	vel = newVel;
 	acc = newAcc;
@@ -48,7 +48,7 @@ void Body::addPath() {
 
 void Body::renderPath() {
 	for (size_t i = 1; i < path.size(); ++i) {
-		DrawLineBezier(path[i - 1], path[i], 10, Fade(BLUE, static_cast<float>(i) / path.size() / 2));
+		DrawSplineSegmentLinear(path[i - 1], path[i], 10, Fade(BLUE, static_cast<float>(i) / path.size() / 2));
 	}
 }
 

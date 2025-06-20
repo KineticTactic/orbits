@@ -1,11 +1,12 @@
 #include "Body.hpp"
 #include "raylib.h"
 #include "raymath.h"
+#include <cstddef>
 #include <iostream>
 
-Body::Body(Vector2 pos, float mass)
+Body::Body(Vector2 pos, Vector2 vel, float mass)
 	: pos(pos),
-	  vel({0.f, 0.f}),
+	  vel(vel),
 acc({0.f, 0.f}),
 newAcc({0.f, 0.f}),
 mass(mass) {
@@ -49,6 +50,12 @@ void Body::addPath() {
 void Body::renderPath() {
 	for (size_t i = 1; i < path.size(); ++i) {
 		DrawSplineSegmentLinear(path[i - 1], path[i], 10, Fade(BLUE, static_cast<float>(i) / path.size() / 2));
+	}
+}
+
+void Body::renderPathAsFuture() {
+	for(size_t i = 0; i < path.size(); i++) {
+		DrawCircleV(path[i], 5, Fade(YELLOW, static_cast<float>(path.size() - i) / path.size() / 2));
 	}
 }
 

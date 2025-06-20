@@ -1,3 +1,5 @@
+#pragma once
+
 #include "raylib.h"
 #include <cmath>
 #include <deque>
@@ -16,7 +18,7 @@ private:
 	std::deque<Vector2> path;
 
 public:
-	Body(Vector2 pos, float mass);
+	Body(Vector2 pos, Vector2 vel, float mass);
 
 	inline Vector2 getPos() {return pos;}
 	inline Vector2 getVel() {return vel;}
@@ -31,6 +33,7 @@ public:
 	void addPath();
 	void renderPath();
 	void render();
+	void renderPathAsFuture();
 
 	void springForce();
 

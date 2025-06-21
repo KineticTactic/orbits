@@ -57,7 +57,7 @@ void Body::addPath() {
 }
 
 void Body::renderPath() {
-	Color col = ColorFromHSV(mass / 10000 * 360, 0.8, 0.5);
+	Color col = ColorFromHSV(mass / 6000 * 360, 0.8, 0.5);
 	for (size_t i = 1; i < path.size(); ++i) {
 		float alpha = static_cast<float>(i) / path.size() / 2;
 		DrawSplineSegmentLinear(path[i - 1], path[i], alpha * radius, Fade(col, alpha));
@@ -65,14 +65,15 @@ void Body::renderPath() {
 }
 
 void Body::renderPathAsFuture() {
+	Color col = ColorFromHSV(mass / 6000 * 360, 0.8, 0.8);
 	for(size_t i = 0; i < path.size(); i++) {
 		float alpha = static_cast<float>(path.size() - i) / path.size() / 2;
-		DrawCircleV(path[i], 5, Fade(YELLOW,alpha));
+		DrawCircleV(path[i], radius * alpha * 0.8f + 2, Fade(col,alpha));
 	}
 }
 
 void Body::render() {
-	Color col = ColorFromHSV(mass / 10000 * 360, 0.8, 1.0);
+	Color col = ColorFromHSV(mass / 6000 * 360, 0.8, 1.0);
 	DrawCircleV(pos, radius, col);
 }
 

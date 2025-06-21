@@ -1,42 +1,28 @@
-# Simple and portable CMake template for raylib
+# Orbits! - A Newtonian Gravity Sandbox
 
-This is a basic project template for raylib using CMake and has been tested with Visual Studio, Visual Studio Code and CLion.
+**Orbits!** is a 2D gravity simulation built in C++ using [raylib](https://www.raylib.com/). It simulates Newtonian gravitational interactions between multiple bodies and visualizes their motion and orbital paths in real time. It Uses **Velocity Verlet** integration for stable, energy-preserving orbits.
 
-The master branch of the raylib source code is downloaded using CMake FetchContent from github and compiled from source as it is much easier than including prebuilt binaries for every platform and configuration.
+![orbits](assets/orbits.gif)
 
-Building from the cmake file will build both raylib and `src/main.c` which includes a basic example of a raylib program.
+# Controls
 
-## Asset handling
+-   **Left Click Drag** to add a body and set its velocity. **Scroll** to change the mass of the body.
+-   **Right Click Drag** to pan the view.
+-   **Scroll** to zoom in and out.
+-   **Space** to pause the simulation.
 
-The example in `src/main.c` uses an example image located in the `assets` folder.
-To load it we use `ASSETS_PATH`, which is a string macro with the *absolute* path "assets" directory.
-This macro is defined in the `CMakeLists.txt` file on line `23`.
- 
-If you plan on releasing or sharing your game consider manually setting the value of the `ASSETS_PATH` macro.
+# Building
 
-In C you can concatenate string literals by putting them next to each other, 
-eg: `"A" "B"` is `"AB"`. So ASSETS_PATH `"test.png"` becomes `"/path/to/your/assets/test.png"`
+Use CMake to build the project. Raylib is automatically downloaded and built as a dependency.
 
-If you wanna share your game with others you should set ASSETS_PATH to be a *relative* path like "./assets/". You can do this in the CMakeLists.txt file. 
+```bash
+git clone https://github.com/KineticTactic/orbits.git
+cd orbits
+mkdir build
+cd build
 
-## Using C++
-
-Using c++ is quite simple, just change these lines in the `CMakeLists.txt`
-from
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .. 	# -G "MinGW Makefiles"
+make 										# or mingw32-make
 ```
-project(my_raylib_game C)
 
-set(CMAKE_C_STANDARD 99)
-
-file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/sources/*.c")
-```
-to
-```
-project(my_raylib_game CXX)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/sources/*.cpp")
-```
-After this just reload cmake and it should build fine.
+orbits.exe will be created in the build directory.

@@ -93,11 +93,12 @@ int main(void)
 			worldCopy.renderLastBodyPath();
 		}
 
+		EndMode2D();
+
 		if(paused) {
 			DrawText("Paused", SCREEN_WIDTH - 100, 30, 24, RED);
 		}
 
-		EndMode2D();
 		EndDrawing();
 		frame++;
 	}

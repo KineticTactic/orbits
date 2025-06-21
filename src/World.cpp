@@ -40,8 +40,13 @@ void World::update(float dt, unsigned int substeps) {
 				Body::collide(bodies[i], bodies[j]);
 		}
 	}
+}
 
-	///TODO: fix
+void World::addPath(bool onlyLast) {
+	if(onlyLast) {
+		bodies[bodies.size() - 1].addPath();
+		return;
+	}
 	for (Body& body : bodies) body.addPath();
 }
 

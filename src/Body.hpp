@@ -30,12 +30,12 @@ public:
 	void update(float dt);
 	void beginUpdateVerlet(float dt);
 	void endUpdateVerlet(float dt);
-	void addPath();
-	void renderPath();
-	void render();
-	void renderPathAsFuture();
 
-	void springForce();
+	void addPath();
+
+	void renderPath();
+	void renderPathAsFuture();
+	void render();
 
 	static void attract(Body& b1, Body& b2);
 	static void collide(Body& b1, Body& b2);

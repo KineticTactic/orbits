@@ -14,6 +14,7 @@ public:
 	void addRandomBodies(float num, float boundX, float boundY);
 
 	void update(float dt, unsigned int substeps);
+	void addPath(bool onlyLast = false);
 
 	void render();
 	void renderLastBodyPath();

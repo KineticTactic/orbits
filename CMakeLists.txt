@@ -1,8 +1,26 @@
 cmake_minimum_required(VERSION 3.0)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # This line is used to generate the compile_commands.json file which is useful for IDEs like VSCode and CLion
+
+# Detect if we are building for Emscripten
+if (CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+  set(EMSCRIPTEN TRUE)
+else ()
+  set(EMSCRIPTEN FALSE)
+endif ()
+
+if (EMSCRIPTEN)
+  set(PLATFORM "Web")
+endif ()
+
 project(orbits CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (EMSCRIPTEN)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
+  set(CMAKE_EXECUTABLE_SUFFIX ".html") # This line is used to set your executable to build with the emscripten html template so that you can directly open it.
+endif ()
 
 # Adding Raylib
 include(FetchContent)
@@ -25,6 +43,16 @@ set(PROJECT_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/src/") # Define PROJECT_INCLUDE t
 
 # Declaring our executable
 add_executable(${PROJECT_NAME})
+
+if (EMSCRIPTEN)
+  target_link_options(${PROJECT_NAME} PRIVATE
+        "--shell-file"
+        "${raylib_SOURCE_DIR}/src/minshell.html"
+  )
+  
+  set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-s USE_GLFW=3 -s ASYNCIFY -s ALLOW_MEMORY_GROWTH=1 -s WASM=1 -s ASSERTIONS=1 -s FORCE_FILESYSTEM=1")
+endif ()
+
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)

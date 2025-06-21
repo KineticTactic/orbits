@@ -1,6 +1,6 @@
 # Orbits! - A Newtonian Gravity Sandbox
 
-**Orbits!** is a 2D gravity simulation built in C++ using [raylib](https://www.raylib.com/). It simulates Newtonian gravitational interactions between multiple bodies and visualizes their motion and orbital paths in real time. It Uses **Velocity Verlet** integration for stable, energy-preserving orbits.
+**Orbits!** is a 2D gravity simulation built in C++ using [raylib](https://www.raylib.com/). It simulates Newtonian gravitational interactions between multiple bodies and visualizes their motion and orbital paths in real time. It uses **Velocity Verlet** integration for stable, energy-preserving orbits.
 
 ![orbits](assets/orbits.gif)
 
@@ -16,13 +16,21 @@
 Use CMake to build the project. Raylib is automatically downloaded and built as a dependency.
 
 ```bash
-git clone https://github.com/KineticTactic/orbits.git
-cd orbits
 mkdir build
-cd build
-
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .. 	# -G "MinGW Makefiles"
-make 										# or mingw32-make
+cmake -B build -S . # -G "MinGW Makefiles"
+cmake --build build	 # or make or mingw32-make
 ```
 
 orbits.exe will be created in the build directory.
+
+### Building to WebAssembly
+
+To build the project for WebAssembly, you need to use the Emscripten toolchain. First, make sure you have Emscripten installed and set up correctly. Then, you can create a build using the following commands:
+
+```bash
+mkdir build
+emcmake cmake -B build -S .
+cmake --build build
+```
+
+This will generate a WebAssembly version of the project that can be run in a web browser.

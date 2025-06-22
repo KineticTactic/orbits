@@ -11,6 +11,12 @@
 -   **Scroll** to zoom in and out.
 -   **Space** to pause the simulation.
 
+### Touch controls:
+
+-   Use buttons for selecting modes.
+-   In PAN mode, drag to pan the view and pinch to zoom.
+-   In ADD mode, tap to add a body and drag to set its velocity. Pinch to change the mass of the body.
+
 # Building
 
 Use CMake to build the project. Raylib is automatically downloaded and built as a dependency.
@@ -28,9 +34,11 @@ orbits.exe will be created in the build directory.
 To build the project for WebAssembly, you need to use the Emscripten toolchain. First, make sure you have Emscripten installed and set up correctly. Then, you can create a build using the following commands:
 
 ```bash
-mkdir build
-emcmake cmake -B build -S .
-cmake --build build
+mkdir buildweb
+emcmake cmake -B buildweb -S .
+cmake --build buildweb
+
+emrun --no_browser --port 8080 buildweb/index.html # to run the server
 ```
 
 This will generate a WebAssembly version of the project that can be run in a web browser.

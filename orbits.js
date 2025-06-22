@@ -3945,60 +3945,6 @@ async function createWasm() {
   var __abort_js = () =>
       abort('native code called abort()');
 
-  
-  var __tzset_js = (timezone, daylight, std_name, dst_name) => {
-      // TODO: Use (malleable) environment variables instead of system settings.
-      var currentYear = new Date().getFullYear();
-      var winter = new Date(currentYear, 0, 1);
-      var summer = new Date(currentYear, 6, 1);
-      var winterOffset = winter.getTimezoneOffset();
-      var summerOffset = summer.getTimezoneOffset();
-  
-      // Local standard timezone offset. Local standard time is not adjusted for
-      // daylight savings.  This code uses the fact that getTimezoneOffset returns
-      // a greater value during Standard Time versus Daylight Saving Time (DST).
-      // Thus it determines the expected output during Standard Time, and it
-      // compares whether the output of the given date the same (Standard) or less
-      // (DST).
-      var stdTimezoneOffset = Math.max(winterOffset, summerOffset);
-  
-      // timezone is specified as seconds west of UTC ("The external variable
-      // `timezone` shall be set to the difference, in seconds, between
-      // Coordinated Universal Time (UTC) and local standard time."), the same
-      // as returned by stdTimezoneOffset.
-      // See http://pubs.opengroup.org/onlinepubs/009695399/functions/tzset.html
-      HEAPU32[((timezone)>>2)] = stdTimezoneOffset * 60;
-  
-      HEAP32[((daylight)>>2)] = Number(winterOffset != summerOffset);
-  
-      var extractZone = (timezoneOffset) => {
-        // Why inverse sign?
-        // Read here https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset
-        var sign = timezoneOffset >= 0 ? "-" : "+";
-  
-        var absOffset = Math.abs(timezoneOffset)
-        var hours = String(Math.floor(absOffset / 60)).padStart(2, "0");
-        var minutes = String(absOffset % 60).padStart(2, "0");
-  
-        return `UTC${sign}${hours}${minutes}`;
-      }
-  
-      var winterName = extractZone(winterOffset);
-      var summerName = extractZone(summerOffset);
-      assert(winterName);
-      assert(summerName);
-      assert(lengthBytesUTF8(winterName) <= 16, `timezone name truncated to fit in TZNAME_MAX (${winterName})`);
-      assert(lengthBytesUTF8(summerName) <= 16, `timezone name truncated to fit in TZNAME_MAX (${summerName})`);
-      if (summerOffset < winterOffset) {
-        // Northern hemisphere
-        stringToUTF8(winterName, std_name, 17);
-        stringToUTF8(summerName, dst_name, 17);
-      } else {
-        stringToUTF8(winterName, dst_name, 17);
-        stringToUTF8(summerName, std_name, 17);
-      }
-    };
-
   var _emscripten_get_now = () => performance.now();
   
   var _emscripten_date_now = () => Date.now();
@@ -7541,65 +7487,6 @@ async function createWasm() {
   var _emscripten_sleep = (ms) => Asyncify.handleSleep((wakeUp) => safeSetTimeout(wakeUp, ms));
   _emscripten_sleep.isAsync = true;
 
-  var ENV = {
-  };
-  
-  var getExecutableName = () => thisProgram || './this.program';
-  var getEnvStrings = () => {
-      if (!getEnvStrings.strings) {
-        // Default values.
-        // Browser language detection #8751
-        var lang = ((typeof navigator == 'object' && navigator.language) || 'C').replace('-', '_') + '.UTF-8';
-        var env = {
-          'USER': 'web_user',
-          'LOGNAME': 'web_user',
-          'PATH': '/',
-          'PWD': '/',
-          'HOME': '/home/web_user',
-          'LANG': lang,
-          '_': getExecutableName()
-        };
-        // Apply the user-provided values, if any.
-        for (var x in ENV) {
-          // x is a key in ENV; if ENV[x] is undefined, that means it was
-          // explicitly set to be so. We allow user code to do that to
-          // force variables with default values to remain unset.
-          if (ENV[x] === undefined) delete env[x];
-          else env[x] = ENV[x];
-        }
-        var strings = [];
-        for (var x in env) {
-          strings.push(`${x}=${env[x]}`);
-        }
-        getEnvStrings.strings = strings;
-      }
-      return getEnvStrings.strings;
-    };
-  
-  var _environ_get = (__environ, environ_buf) => {
-      var bufSize = 0;
-      var envp = 0;
-      for (var string of getEnvStrings()) {
-        var ptr = environ_buf + bufSize;
-        HEAPU32[(((__environ)+(envp))>>2)] = ptr;
-        bufSize += stringToUTF8(string, ptr, Infinity) + 1;
-        envp += 4;
-      }
-      return 0;
-    };
-
-  
-  var _environ_sizes_get = (penviron_count, penviron_buf_size) => {
-      var strings = getEnvStrings();
-      HEAPU32[((penviron_count)>>2)] = strings.length;
-      var bufSize = 0;
-      for (var string of strings) {
-        bufSize += lengthBytesUTF8(string) + 1;
-      }
-      HEAPU32[((penviron_buf_size)>>2)] = bufSize;
-      return 0;
-    };
-
 
   function _fd_close(fd) {
   try {
@@ -9670,6 +9557,7 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   'writeSockaddr',
   'emscriptenLog',
   'runMainThreadEmAsm',
+  'getExecutableName',
   'autoResumeAudioContext',
   'getDynCaller',
   'asmjsMangle',
@@ -9736,6 +9624,7 @@ if (Module['wasmBinary']) wasmBinary = Module['wasmBinary'];
   'jsStackTrace',
   'getCallstack',
   'convertPCtoSourceLocation',
+  'getEnvStrings',
   'wasiRightsToMuslOFlags',
   'wasiOFlagsToMuslOFlags',
   'setImmediateWrapped',
@@ -9813,7 +9702,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'readEmAsmArgs',
   'runEmAsmFunction',
   'jstoi_q',
-  'getExecutableName',
   'dynCallLegacy',
   'dynCall',
   'handleException',
@@ -9870,7 +9758,6 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'registerGamepadEventCallback',
   'UNWIND_CACHE',
   'ExitStatus',
-  'getEnvStrings',
   'checkWasiClock',
   'doReadv',
   'doWritev',
@@ -10072,56 +9959,57 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  107296: () => { if (document.fullscreenElement) return 1; },  
- 107342: () => { return Module.canvas.width; },  
- 107374: () => { return parseInt(Module.canvas.style.width); },  
- 107422: () => { document.exitFullscreen(); },  
- 107449: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
- 107522: () => { if (document.fullscreenElement) return 1; },  
- 107568: () => { return Module.canvas.width; },  
- 107600: () => { return screen.width; },  
- 107625: () => { document.exitFullscreen(); },  
- 107652: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
- 107785: () => { return window.innerWidth; },  
- 107811: () => { return window.innerHeight; },  
- 107838: () => { if (document.fullscreenElement) return 1; },  
- 107884: () => { return Module.canvas.width; },  
- 107916: () => { return parseInt(Module.canvas.style.width); },  
- 107964: () => { if (document.fullscreenElement) return 1; },  
- 108010: () => { return Module.canvas.width; },  
- 108042: () => { return screen.width; },  
- 108067: () => { return window.innerWidth; },  
- 108093: () => { return window.innerHeight; },  
- 108120: () => { if (document.fullscreenElement) return 1; },  
- 108166: () => { return Module.canvas.width; },  
- 108198: () => { return screen.width; },  
- 108223: () => { document.exitFullscreen(); },  
- 108250: () => { if (document.fullscreenElement) return 1; },  
- 108296: () => { return Module.canvas.width; },  
- 108328: () => { return parseInt(Module.canvas.style.width); },  
- 108376: () => { document.exitFullscreen(); },  
- 108403: ($0) => { Module.canvas.style.opacity = $0; },  
- 108441: () => { return screen.width; },  
- 108466: () => { return screen.height; },  
- 108492: () => { return window.screenX; },  
- 108519: () => { return window.screenY; },  
- 108546: () => { return window.devicePixelRatio; },  
- 108582: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
- 108635: ($0) => { Module.canvas.style.cursor = UTF8ToString($0); },  
- 108686: () => { Module.canvas.style.cursor = 'none'; },  
- 108723: ($0, $1, $2, $3) => { try { navigator.getGamepads()[$0].vibrationActuator.playEffect('dual-rumble', { startDelay: 0, duration: $3, weakMagnitude: $1, strongMagnitude: $2 }); } catch (e) { try { navigator.getGamepads()[$0].hapticActuators[0].pulse($2, $3); } catch (e) { } } },  
- 108979: ($0) => { Module.canvas.style.cursor = UTF8ToString($0); },  
- 109030: () => { if (document.fullscreenElement) return 1; },  
- 109076: () => { return window.innerWidth; },  
- 109102: () => { return window.innerHeight; },  
- 109129: () => { if (document.pointerLockElement) return 1; }
+  115055: () => { if (document.fullscreenElement) return 1; },  
+ 115101: () => { return Module.canvas.width; },  
+ 115133: () => { return parseInt(Module.canvas.style.width); },  
+ 115181: () => { document.exitFullscreen(); },  
+ 115208: () => { setTimeout(function() { Module.requestFullscreen(false, false); }, 100); },  
+ 115281: () => { if (document.fullscreenElement) return 1; },  
+ 115327: () => { return Module.canvas.width; },  
+ 115359: () => { return screen.width; },  
+ 115384: () => { document.exitFullscreen(); },  
+ 115411: () => { setTimeout(function() { Module.requestFullscreen(false, true); setTimeout(function() { canvas.style.width="unset"; }, 100); }, 100); },  
+ 115544: () => { return window.innerWidth; },  
+ 115570: () => { return window.innerHeight; },  
+ 115597: () => { if (document.fullscreenElement) return 1; },  
+ 115643: () => { return Module.canvas.width; },  
+ 115675: () => { return parseInt(Module.canvas.style.width); },  
+ 115723: () => { if (document.fullscreenElement) return 1; },  
+ 115769: () => { return Module.canvas.width; },  
+ 115801: () => { return screen.width; },  
+ 115826: () => { return window.innerWidth; },  
+ 115852: () => { return window.innerHeight; },  
+ 115879: () => { if (document.fullscreenElement) return 1; },  
+ 115925: () => { return Module.canvas.width; },  
+ 115957: () => { return screen.width; },  
+ 115982: () => { document.exitFullscreen(); },  
+ 116009: () => { if (document.fullscreenElement) return 1; },  
+ 116055: () => { return Module.canvas.width; },  
+ 116087: () => { return parseInt(Module.canvas.style.width); },  
+ 116135: () => { document.exitFullscreen(); },  
+ 116162: ($0) => { Module.canvas.style.opacity = $0; },  
+ 116200: () => { return screen.width; },  
+ 116225: () => { return screen.height; },  
+ 116251: () => { return window.screenX; },  
+ 116278: () => { return window.screenY; },  
+ 116305: () => { return window.devicePixelRatio; },  
+ 116341: ($0) => { navigator.clipboard.writeText(UTF8ToString($0)); },  
+ 116394: ($0) => { Module.canvas.style.cursor = UTF8ToString($0); },  
+ 116445: () => { Module.canvas.style.cursor = 'none'; },  
+ 116482: ($0, $1, $2, $3) => { try { navigator.getGamepads()[$0].vibrationActuator.playEffect('dual-rumble', { startDelay: 0, duration: $3, weakMagnitude: $1, strongMagnitude: $2 }); } catch (e) { try { navigator.getGamepads()[$0].hapticActuators[0].pulse($2, $3); } catch (e) { } } },  
+ 116738: ($0) => { Module.canvas.style.cursor = UTF8ToString($0); },  
+ 116789: () => { if (document.fullscreenElement) return 1; },  
+ 116835: () => { return window.innerWidth; },  
+ 116861: () => { return window.innerHeight; },  
+ 116888: () => { if (document.pointerLockElement) return 1; }
 };
+function isMobile() { return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent); }
 function GetCanvasIdJs() { var canvasId = "#" + Module.canvas.id; var lengthBytes = lengthBytesUTF8(canvasId) + 1; var stringOnWasmHeap = _malloc(lengthBytes); stringToUTF8(canvasId, stringOnWasmHeap, lengthBytes); return stringOnWasmHeap; }
 
 // Imports from the Wasm binary.
-var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
-var _malloc = makeInvalidEarlyAccess('_malloc');
 var _free = makeInvalidEarlyAccess('_free');
+var _malloc = makeInvalidEarlyAccess('_malloc');
+var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
 var _fflush = makeInvalidEarlyAccess('_fflush');
 var _emscripten_stack_get_end = makeInvalidEarlyAccess('_emscripten_stack_get_end');
 var _emscripten_stack_get_base = makeInvalidEarlyAccess('_emscripten_stack_get_base');
@@ -10158,25 +10046,15 @@ var dynCall_viiiiii = makeInvalidEarlyAccess('dynCall_viiiiii');
 var dynCall_vfff = makeInvalidEarlyAccess('dynCall_vfff');
 var dynCall_jiji = makeInvalidEarlyAccess('dynCall_jiji');
 var dynCall_iidiiii = makeInvalidEarlyAccess('dynCall_iidiiii');
-var dynCall_viijii = makeInvalidEarlyAccess('dynCall_viijii');
-var dynCall_iiiii = makeInvalidEarlyAccess('dynCall_iiiii');
-var dynCall_iiiiii = makeInvalidEarlyAccess('dynCall_iiiiii');
-var dynCall_iiiiiiiii = makeInvalidEarlyAccess('dynCall_iiiiiiiii');
-var dynCall_iiiiiii = makeInvalidEarlyAccess('dynCall_iiiiiii');
-var dynCall_iiiiij = makeInvalidEarlyAccess('dynCall_iiiiij');
-var dynCall_iiiiid = makeInvalidEarlyAccess('dynCall_iiiiid');
-var dynCall_iiiiijj = makeInvalidEarlyAccess('dynCall_iiiiijj');
-var dynCall_iiiiiiii = makeInvalidEarlyAccess('dynCall_iiiiiiii');
-var dynCall_iiiiiijj = makeInvalidEarlyAccess('dynCall_iiiiiijj');
 var _asyncify_start_unwind = makeInvalidEarlyAccess('_asyncify_start_unwind');
 var _asyncify_stop_unwind = makeInvalidEarlyAccess('_asyncify_stop_unwind');
 var _asyncify_start_rewind = makeInvalidEarlyAccess('_asyncify_start_rewind');
 var _asyncify_stop_rewind = makeInvalidEarlyAccess('_asyncify_stop_rewind');
 
 function assignWasmExports(wasmExports) {
-  Module['_main'] = _main = createExportWrapper('main', 2);
-  _malloc = createExportWrapper('malloc', 1);
   _free = createExportWrapper('free', 1);
+  _malloc = createExportWrapper('malloc', 1);
+  Module['_main'] = _main = createExportWrapper('main', 2);
   _fflush = createExportWrapper('fflush', 1);
   _emscripten_stack_get_end = wasmExports['emscripten_stack_get_end'];
   _emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'];
@@ -10213,16 +10091,6 @@ function assignWasmExports(wasmExports) {
   dynCalls['vfff'] = dynCall_vfff = createExportWrapper('dynCall_vfff', 4);
   dynCalls['jiji'] = dynCall_jiji = createExportWrapper('dynCall_jiji', 4);
   dynCalls['iidiiii'] = dynCall_iidiiii = createExportWrapper('dynCall_iidiiii', 7);
-  dynCalls['viijii'] = dynCall_viijii = createExportWrapper('dynCall_viijii', 6);
-  dynCalls['iiiii'] = dynCall_iiiii = createExportWrapper('dynCall_iiiii', 5);
-  dynCalls['iiiiii'] = dynCall_iiiiii = createExportWrapper('dynCall_iiiiii', 6);
-  dynCalls['iiiiiiiii'] = dynCall_iiiiiiiii = createExportWrapper('dynCall_iiiiiiiii', 9);
-  dynCalls['iiiiiii'] = dynCall_iiiiiii = createExportWrapper('dynCall_iiiiiii', 7);
-  dynCalls['iiiiij'] = dynCall_iiiiij = createExportWrapper('dynCall_iiiiij', 6);
-  dynCalls['iiiiid'] = dynCall_iiiiid = createExportWrapper('dynCall_iiiiid', 6);
-  dynCalls['iiiiijj'] = dynCall_iiiiijj = createExportWrapper('dynCall_iiiiijj', 7);
-  dynCalls['iiiiiiii'] = dynCall_iiiiiiii = createExportWrapper('dynCall_iiiiiiii', 8);
-  dynCalls['iiiiiijj'] = dynCall_iiiiiijj = createExportWrapper('dynCall_iiiiiijj', 8);
   _asyncify_start_unwind = createExportWrapper('asyncify_start_unwind', 1);
   _asyncify_stop_unwind = createExportWrapper('asyncify_stop_unwind', 0);
   _asyncify_start_rewind = createExportWrapper('asyncify_start_rewind', 1);
@@ -10247,8 +10115,6 @@ var wasmImports = {
   __syscall_openat: ___syscall_openat,
   /** @export */
   _abort_js: __abort_js,
-  /** @export */
-  _tzset_js: __tzset_js,
   /** @export */
   clock_time_get: _clock_time_get,
   /** @export */
@@ -10632,10 +10498,6 @@ var wasmImports = {
   /** @export */
   emscripten_sleep: _emscripten_sleep,
   /** @export */
-  environ_get: _environ_get,
-  /** @export */
-  environ_sizes_get: _environ_sizes_get,
-  /** @export */
   exit: _exit,
   /** @export */
   fd_close: _fd_close,
@@ -10796,7 +10658,9 @@ var wasmImports = {
   /** @export */
   glfwTerminate: _glfwTerminate,
   /** @export */
-  glfwWindowHint: _glfwWindowHint
+  glfwWindowHint: _glfwWindowHint,
+  /** @export */
+  isMobile
 };
 var wasmExports;
 createWasm();

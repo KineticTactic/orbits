@@ -19,5 +19,5 @@ public:
 	void render();
 	void renderLastBodyPath();
 
-	World copy() const;
+	World* copy() const;
 };

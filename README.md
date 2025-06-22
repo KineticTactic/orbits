@@ -23,7 +23,7 @@ cmake --build build	 # or make or mingw32-make
 
 orbits.exe will be created in the build directory.
 
-### Building to WebAssembly
+### Building for WebAssembly
 
 To build the project for WebAssembly, you need to use the Emscripten toolchain. First, make sure you have Emscripten installed and set up correctly. Then, you can create a build using the following commands:
 

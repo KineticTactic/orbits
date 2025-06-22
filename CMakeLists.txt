@@ -37,6 +37,18 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
+FetchContent_Declare(
+    raygui
+    GIT_REPOSITORY https://github.com/raysan5/raygui.git
+    GIT_TAG master
+    GIT_PROGRESS TRUE
+)
+
+FetchContent_GetProperties(raygui)
+if (NOT raygui_POPULATED)
+    FetchContent_Populate(raygui)
+endif ()
+
 # Adding our source files
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp") # Define PROJECT_SOURCES as a list of all source files
 set(PROJECT_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/src/") # Define PROJECT_INCLUDE to be the path to the include directory of the project
@@ -55,6 +67,7 @@ endif ()
 
 target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
+target_include_directories(${PROJECT_NAME} PRIVATE ${raygui_SOURCE_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
 # Setting ASSETS_PATH

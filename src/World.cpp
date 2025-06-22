@@ -62,8 +62,8 @@ void World::renderLastBodyPath() {
 	bodies[bodies.size() - 1].renderPathAsFuture();
 }
 
-World World::copy() const {
-	World w;
-	w.bodies = this->bodies;
+World* World::copy() const {
+	World* w = new World();
+	w->bodies = this->bodies;
 	return w;
 }
